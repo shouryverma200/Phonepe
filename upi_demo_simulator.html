@@ -1,0 +1,3210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>PhonePe UPI Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Official PhonePe Dark Mode Palette */
+      --pp-purple: #8225e0;
+      --pp-purple-hover: #9338f0;
+      --pp-purple-dark: #1b0a2d;
+      --pp-purple-surface: #24143a;
+      --pp-purple-border: #4a276d;
+      --pp-purple-glow: rgba(130, 37, 224, 0.15);
+      
+      --pp-bg: #0f0e13;
+      --pp-card: #18171e;
+      --pp-card-elevated: #22202a;
+      --pp-card-border: #292735;
+      --pp-divider: #23212c;
+      
+      --pp-text-main: #f7f7fa;
+      --pp-text-sub: #9a99a8;
+      --pp-text-muted: #6c6a7a;
+      
+      --pp-green: #1ea652;
+      --pp-green-bg: #0f2719;
+      --pp-red: #ea3943;
+      --pp-orange: #f57c00;
+      --pp-blue: #29b6f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      text-shadow: none !important;
+      filter: none !important;
+    }
+
+    body {
+      background-color: #07070a;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    .app-viewport {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    /* Pixel-Perfect Phone Container (Dark Mode) */
+    .phone-container {
+      width: 100%;
+      max-width: 416px;
+      height: 100vh;
+      max-height: 870px;
+      background: var(--pp-bg);
+      border-radius: 38px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 0 1px #23212c;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 450px) {
+      .phone-container {
+        border-radius: 0;
+        max-height: 100vh;
+        height: 100vh;
+        border: none;
+      }
+    }
+
+    /* Screen Stage */
+    .screen-stage {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--pp-bg);
+    }
+
+    .app-screen {
+      position: absolute;
+      inset: 0;
+      background: var(--pp-bg);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.16s ease;
+      overflow-y: auto;
+      padding-bottom: 64px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .app-screen::-webkit-scrollbar {
+      display: none;
+    }
+    .app-screen.hidden-screen {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(14px);
+    }
+    .app-screen.active-screen {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      z-index: 5;
+    }
+
+    /* ================= 1:1 PHONEPE TOP PURPLE HEADER ================= */
+    .phonepe-main-header {
+      background: linear-gradient(180deg, #2b1249 0%, #1c0a32 100%);
+      color: #ffffff;
+      padding: 13px 15px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .header-user-loc-box {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      cursor: pointer;
+    }
+    .profile-circle-wrap {
+      position: relative;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #25123d;
+      color: #e5bfff;
+      font-weight: 700;
+      font-size: 16px;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid #6b28a8;
+      flex-shrink: 0;
+    }
+    .profile-flag-circle {
+      position: absolute;
+      bottom: -1px;
+      right: -2px;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #140d22;
+      display: grid;
+      place-items: center;
+      font-size: 9.5px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .header-user-info-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-name-line {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: -0.2px;
+    }
+    .user-name-text {
+      max-width: 175px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-acc-badge {
+      font-size: 10.5px;
+      color: #bf82ff;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 1px;
+    }
+    .user-acc-badge .verified-dot {
+      width: 6px;
+      height: 6px;
+      background: #1ea652;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .header-right-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hdr-action-btn {
+      background: rgba(255, 255, 255, 0.07);
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      position: relative;
+      padding: 7px;
+      border-radius: 50%;
+      transition: background 0.15s;
+    }
+    .hdr-action-btn:active {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .hdr-red-dot {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      width: 7px;
+      height: 7px;
+      background: #ea3943;
+      border-radius: 50%;
+      border: 1px solid #1c0a32;
+    }
+
+    /* DASHBOARD CONTENT */
+    .dashboard-content {
+      padding: 10px 12px;
+    }
+
+    /* UPI ID QUICK BAR */
+    .upi-info-strip {
+      background: var(--pp-card);
+      border-radius: 12px;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid var(--pp-card-border);
+    }
+    .upi-id-left {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11.5px;
+      color: var(--pp-text-sub);
+    }
+    .upi-id-bold {
+      color: var(--pp-text-main);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+    }
+    .btn-copy-upi {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #bf82ff;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    /* PRIMARY CARDS (DARK) */
+    .pp-white-card {
+      background: var(--pp-card);
+      border-radius: 16px;
+      padding: 14px 12px;
+      margin-bottom: 10px;
+      border: 1px solid var(--pp-card-border);
+    }
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 0 4px;
+    }
+    .card-title-text {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--pp-text-sub);
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    .card-action-link {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #bf82ff;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* Transfer Money 4-Circle Layout */
+    .transfer-circle-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .transfer-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .transfer-circle-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--pp-purple-surface);
+      color: #dcb3ff;
+      display: grid;
+      place-items: center;
+      margin-bottom: 7px;
+      border: 1px solid var(--pp-purple-border);
+      transition: transform 0.12s, background 0.12s;
+    }
+    .transfer-item:active .transfer-circle-icon {
+      transform: scale(0.92);
+      background: #341a54;
+    }
+    .transfer-item.highlight .transfer-circle-icon {
+      background: var(--pp-purple);
+      color: #ffffff;
+      border-color: #9a4bf0;
+      box-shadow: 0 4px 14px rgba(130, 37, 224, 0.35);
+    }
+    .transfer-circle-label {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--pp-text-main);
+      text-align: center;
+      line-height: 1.25;
+      min-height: 26px;
+    }
+
+    /* QUICK LINKS STRIP (Wallet, Rewards, Refer) */
+    .quick-links-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .quick-link-card {
+      background: var(--pp-card);
+      border-radius: 12px;
+      padding: 11px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border: 1px solid var(--pp-card-border);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .quick-link-card:active {
+      background: var(--pp-card-elevated);
+    }
+    .ql-icon {
+      font-size: 19px;
+      margin-bottom: 4px;
+    }
+    .ql-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--pp-text-main);
+    }
+    .ql-sub {
+      font-size: 9.5px;
+      color: var(--pp-text-sub);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    /* PROMOTIONAL PHONEPE BANNER */
+    .phonepe-promo-card {
+      background: linear-gradient(135deg, #2f134f 0%, #1b0a2f 100%);
+      border-radius: 16px;
+      padding: 14px 16px;
+      color: #ffffff;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #4a2176;
+      cursor: pointer;
+    }
+    .promo-content h3 {
+      font-size: 13.5px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .promo-content p {
+      font-size: 11px;
+      color: #dcb3ff;
+      margin-top: 2px;
+    }
+    .promo-btn-tag {
+      background: #ffffff;
+      color: #2b0e4a;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    /* RECHARGE & BILL PAY 8-GRID */
+    .recharge-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      row-gap: 14px;
+      column-gap: 6px;
+    }
+    .recharge-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+    }
+    .recharge-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--pp-card-elevated);
+      color: var(--pp-text-main);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      margin-bottom: 6px;
+      border: 1px solid var(--pp-card-border);
+      transition: all 0.12s;
+    }
+    .recharge-item:active .recharge-icon-box {
+      background: var(--pp-purple-surface);
+      border-color: var(--pp-purple-border);
+      transform: scale(0.94);
+    }
+    .recharge-label {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--pp-text-main);
+      line-height: 1.2;
+    }
+
+    /* INSURANCE CARDS ROW */
+    .insurance-cards-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+    .insurance-card {
+      background: var(--pp-card-elevated);
+      border: 1px solid var(--pp-card-border);
+      border-radius: 12px;
+      padding: 10px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      text-align: center;
+    }
+    .ins-icon {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+    .ins-title {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--pp-text-main);
+    }
+
+    /* RECENT TRANSACTIONS PREVIEW */
+    .home-tx-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 4px;
+      border-bottom: 1px solid var(--pp-divider);
+      cursor: pointer;
+    }
+    .home-tx-item:last-child {
+      border-bottom: none;
+    }
+    .home-tx-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .home-tx-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--pp-card-elevated);
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--pp-text-main);
+      border: 1px solid var(--pp-card-border);
+    }
+    .home-tx-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--pp-text-main);
+      letter-spacing: -0.1px;
+    }
+    .home-tx-time {
+      font-size: 10.5px;
+      color: var(--pp-text-sub);
+    }
+    .home-tx-amount {
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    /* ================= HISTORY TAB SCREEN ================= */
+    #screen-history {
+      background: var(--pp-bg);
+    }
+    .history-header {
+      background: #16151c;
+      color: #ffffff;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--pp-card-border);
+    }
+    .history-header h2 {
+      font-size: 16.5px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .history-search-bar {
+      padding: 10px 14px;
+      background: var(--pp-bg);
+      border-bottom: 1px solid var(--pp-card-border);
+    }
+    .history-search-input-box {
+      display: flex;
+      align-items: center;
+      background: var(--pp-card);
+      border: 1px solid var(--pp-card-border);
+      border-radius: 20px;
+      padding: 8px 14px;
+      gap: 9px;
+    }
+    .history-search-input-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 12.5px;
+      width: 100%;
+      color: var(--pp-text-main);
+    }
+    .history-search-input-box input::placeholder {
+      color: var(--pp-text-muted);
+    }
+    .history-filter-chips {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px;
+      background: var(--pp-bg);
+      border-bottom: 1px solid var(--pp-card-border);
+      overflow-x: auto;
+    }
+    .hist-chip {
+      background: var(--pp-card);
+      border: 1px solid var(--pp-card-border);
+      padding: 5px 14px;
+      border-radius: 16px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--pp-text-sub);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .hist-chip.active {
+      background: var(--pp-purple-surface);
+      border-color: var(--pp-purple);
+      color: #e2beff;
+    }
+    .history-list {
+      background: var(--pp-bg);
+    }
+    .hist-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--pp-divider);
+      cursor: pointer;
+      background: var(--pp-bg);
+      transition: background 0.12s;
+    }
+    .hist-item:active {
+      background: var(--pp-card);
+    }
+    .hist-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hist-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--pp-card);
+      display: grid;
+      place-items: center;
+      position: relative;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--pp-text-main);
+      border: 1px solid var(--pp-card-border);
+      flex-shrink: 0;
+    }
+    .hist-type-badge {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 2px solid var(--pp-bg);
+      font-size: 9.5px;
+      color: #ffffff;
+    }
+    .badge-debit {
+      background: var(--pp-red);
+    }
+    .badge-credit {
+      background: var(--pp-green);
+    }
+    .hist-details {
+      display: flex;
+      flex-direction: column;
+    }
+    .hist-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--pp-text-main);
+      line-height: 1.3;
+      letter-spacing: -0.1px;
+    }
+    .hist-subtitle {
+      font-size: 11.5px;
+      color: var(--pp-text-sub);
+      margin-top: 1px;
+    }
+    .hist-timestamp {
+      font-size: 10.5px;
+      color: var(--pp-text-muted);
+      margin-top: 2px;
+    }
+    .hist-right {
+      text-align: right;
+    }
+    .hist-amount {
+      font-size: 14.5px;
+      font-weight: 600;
+    }
+    .amount-debit {
+      color: var(--pp-text-main);
+    }
+    .amount-credit {
+      color: var(--pp-green);
+    }
+    .hist-bank-tag {
+      font-size: 10.5px;
+      color: var(--pp-text-muted);
+      margin-top: 2px;
+    }
+
+    /* SCREEN: PHONEPE TRANSACTION RECEIPT MODAL */
+    #screen-tx-detail {
+      background: var(--pp-bg);
+      z-index: 50;
+      padding-bottom: 20px;
+    }
+    .tx-detail-top-nav {
+      background: #16151c;
+      color: #ffffff;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--pp-card-border);
+    }
+    .tx-back-btn {
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .tx-card {
+      background: var(--pp-card);
+      margin: 14px;
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid var(--pp-card-border);
+    }
+    .tx-status-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed var(--pp-card-border);
+    }
+    .tx-status-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--pp-green);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .tx-status-text h3 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--pp-text-main);
+    }
+    .tx-status-text p {
+      font-size: 11.5px;
+      color: var(--pp-text-sub);
+    }
+    .tx-main-amount {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .tx-amount-big {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--pp-text-main);
+      letter-spacing: -0.5px;
+    }
+    .tx-info-block {
+      background: var(--pp-card-elevated);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 12px;
+      border: 1px solid var(--pp-card-border);
+    }
+    .tx-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+    .tx-info-row .lbl {
+      color: var(--pp-text-sub);
+    }
+    .tx-info-row .val {
+      font-weight: 600;
+      color: var(--pp-text-main);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tx-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-tx-action {
+      background: var(--pp-purple-surface);
+      color: #dcb3ff;
+      border: 1px solid var(--pp-purple-border);
+      padding: 11px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* ================= AUTHENTIC NPCI UPI PIN SCREEN ================= */
+    #screen-npci-pin {
+      background: #111015;
+      z-index: 20;
+      padding-bottom: 0;
+    }
+    .npci-top-nav {
+      background: #16151c;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--pp-card-border);
+    }
+    .npci-bank-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .npci-bank-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #231238;
+      color: #e5bfff;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid #4a276d;
+    }
+    .npci-bank-details h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f4f4f5;
+    }
+    .npci-bank-details p {
+      font-size: 11px;
+      color: #9a99a8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .npci-close-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #9a99a8;
+      cursor: pointer;
+    }
+    .npci-warning-banner {
+      background: #23180f;
+      border-bottom: 1px solid #452b14;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fed7aa;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    .npci-pin-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .npci-prompt-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #8e8d9e;
+      letter-spacing: 0.6px;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+    }
+    .npci-dots-row {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .npci-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid #484656;
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+    .npci-dot.filled {
+      background: #f7f7fa;
+      border-color: #f7f7fa;
+      transform: scale(1.15);
+    }
+    .npci-hint {
+      font-size: 11.5px;
+      color: #6c6a7a;
+    }
+    .npci-keypad {
+      background: #15141b;
+      padding: 8px 12px 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      border-top: 1px solid var(--pp-card-border);
+    }
+    .npci-key {
+      background: #211f29;
+      border: 1px solid #2b2938;
+      border-radius: 10px;
+      height: 52px;
+      font-size: 21px;
+      font-weight: 600;
+      color: #f7f7fa;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.1s;
+    }
+    .npci-key:active {
+      background: #2d2a38;
+      transform: scale(0.96);
+    }
+    .npci-key.key-action {
+      background: #18171f;
+      color: #9a99a8;
+    }
+    .npci-key.key-submit {
+      background: var(--pp-purple);
+      color: #ffffff;
+      border-color: #9a4bf0;
+    }
+
+    .shake-effect {
+      animation: npciShake 0.4s ease-in-out;
+    }
+    @keyframes npciShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-12px); }
+      40%, 80% { transform: translateX(12px); }
+    }
+
+    /* SCREEN: CONNECTING LOADER */
+    #screen-loader {
+      background: var(--pp-bg);
+      z-index: 25;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 30px;
+      padding-bottom: 60px;
+    }
+    .phonepe-spinner {
+      width: 52px;
+      height: 52px;
+      border: 4px solid var(--pp-purple-surface);
+      border-top-color: var(--pp-purple);
+      border-radius: 50%;
+      animation: spinPhonePe 0.8s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spinPhonePe {
+      to { transform: rotate(360deg); }
+    }
+
+    /* SCREEN: PHONEPE BALANCE CONFIRMATION */
+    #screen-phonepe-result {
+      background: var(--pp-bg);
+      z-index: 30;
+      padding-bottom: 20px;
+    }
+    .result-purple-header {
+      background: linear-gradient(180deg, #2c124a 0%, #170929 100%);
+      color: #ffffff;
+      padding: 26px 18px 44px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .verified-badge-anim {
+      width: 54px;
+      height: 54px;
+      background: var(--pp-green);
+      color: #ffffff;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0 auto 12px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .result-card-container {
+      margin: -24px 14px 0;
+      background: var(--pp-card);
+      border-radius: 18px;
+      padding: 18px 16px;
+      border: 1px solid var(--pp-card-border);
+    }
+    .res-bank-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed var(--pp-card-border);
+    }
+    .res-bank-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--pp-purple-surface);
+      color: #dcb3ff;
+      border: 1px solid var(--pp-purple-border);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .res-balance-block {
+      text-align: center;
+      padding: 22px 0 16px;
+    }
+    .res-big-amount-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 4px;
+    }
+    .res-currency {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--pp-text-main);
+    }
+    .res-amount-number {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--pp-text-main);
+      letter-spacing: -0.5px;
+    }
+    .res-amount-hidden {
+      letter-spacing: 5px;
+      font-size: 28px;
+    }
+    .btn-toggle-eye {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #bf82ff;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-phonepe-done {
+      width: 100%;
+      background: var(--pp-purple);
+      color: #ffffff;
+      border: none;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 18px;
+      border: 1px solid #9a4bf0;
+    }
+
+    /* ================= BOTTOM NAVIGATION ================= */
+    .phonepe-bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #15141b;
+      border-top: 1px solid var(--pp-card-border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 40;
+    }
+    .nav-tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--pp-text-sub);
+      font-size: 10.5px;
+      font-weight: 500;
+      padding: 6px 10px;
+      transition: color 0.12s;
+    }
+    .nav-tab-item svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2;
+    }
+    .nav-tab-item.active {
+      color: #bf82ff;
+    }
+    .nav-tab-item.active svg {
+      stroke: #bf82ff;
+      stroke-width: 2.2;
+    }
+
+    /* Toast Notification */
+    .phone-toast {
+      position: absolute;
+      top: 65px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-30px);
+      background: #262432;
+      color: #ffffff;
+      border: 1px solid #3d3a4e;
+      padding: 8px 18px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      font-weight: 500;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s ease;
+      white-space: nowrap;
+    }
+    .phone-toast.toast-visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* MODAL BOTTOM SHEETS */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      z-index: 60;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .bottom-sheet {
+      background: #18171f;
+      border-top: 1px solid var(--pp-card-border);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 18px 28px;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      max-height: 85%;
+      overflow-y: auto;
+    }
+    .modal-overlay.open .bottom-sheet {
+      transform: translateY(0);
+    }
+    .sheet-handle {
+      width: 38px;
+      height: 4px;
+      background: #3b3949;
+      border-radius: 99px;
+      margin: 0 auto 16px;
+    }
+    .sheet-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--pp-text-main);
+      margin-bottom: 4px;
+      letter-spacing: -0.2px;
+    }
+    .sheet-desc {
+      font-size: 11.5px;
+      color: var(--pp-text-sub);
+      margin-bottom: 16px;
+    }
+    .selectable-bank-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px;
+      border: 1.5px solid var(--pp-purple);
+      border-radius: 14px;
+      background: var(--pp-purple-surface);
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .btn-edit-account-inline {
+      width: 100%;
+      background: var(--pp-card-elevated);
+      color: var(--pp-text-sub);
+      border: 1px dashed var(--pp-card-border);
+      padding: 11px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .acc-form-group {
+      margin-bottom: 12px;
+    }
+    .acc-form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--pp-text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 5px;
+    }
+    .acc-input, .acc-select {
+      width: 100%;
+      border: 1px solid var(--pp-card-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--pp-text-main);
+      outline: none;
+      background: var(--pp-card-elevated);
+      transition: border-color 0.2s;
+    }
+    .acc-input:focus, .acc-select:focus {
+      border-color: var(--pp-purple);
+    }
+    .btn-save-account {
+      width: 100%;
+      background: var(--pp-purple);
+      color: #ffffff;
+      border: 1px solid #9a4bf0;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    /* Secret QR Scanner & Trigger Styling */
+    .qr-secret-gear-btn {
+      position: absolute;
+      top: 12px;
+      right: 48px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      color: #9a99a8;
+      font-size: 13px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+    .qr-secret-gear-btn:hover {
+      opacity: 1;
+    }
+
+    /* ================= DEDICATED SIMULATION CONTROL DRAWER ================= */
+    .sim-panel-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .sim-panel-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .sim-control-drawer {
+      width: 86%;
+      max-width: 350px;
+      height: 100%;
+      background: #17161e;
+      border-left: 1px solid #2d2b3b;
+      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sim-panel-backdrop.active .sim-control-drawer {
+      transform: translateX(0);
+    }
+    .sim-drawer-header {
+      padding: 16px;
+      background: #1e1d27;
+      border-bottom: 1px solid #2d2b3b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sim-drawer-body {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .sim-section-box {
+      background: #111016;
+      border: 1px solid #282635;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .sim-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #bf82ff;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-viewport">
+
+    <!-- ================= 1:1 DUPLICATE PHONEPE MOBILE CONTAINER ================= -->
+    <main class="phone-container" id="phoneMockup">
+      
+      <!-- In-app Toast Notification -->
+      <div class="phone-toast" id="phoneToast">Copied to clipboard</div>
+
+      <!-- Simulation Drawer Backdrop & Panel -->
+      <aside class="sim-panel-backdrop" id="simDrawerBackdrop" onclick="handleSimBackdropClick(event)">
+        <div class="sim-control-drawer" id="simDrawerContent">
+          <div class="sim-drawer-header">
+            <div>
+              <h3 style="font-size:14px; font-weight:700; color:#f4f4f5;">Simulation Panel</h3>
+              <p style="font-size:10.5px; color:#a1a1aa;">Edit Balance, PIN & Transactions</p>
+            </div>
+            <button onclick="toggleSimDrawer(false)" style="border:none; background:rgba(255,255,255,0.08); color:#f4f4f5; width:28px; height:28px; border-radius:50%; font-size:14px; cursor:pointer;">✕</button>
+          </div>
+
+          <div class="sim-drawer-body">
+            <!-- Account & Balance Configuration -->
+            <div class="sim-section-box">
+              <div class="sim-section-title">👤 Account & Balance</div>
+              
+              <div class="acc-form-group">
+                <label>Account Holder Name</label>
+                <input type="text" class="acc-input" id="simInputName" value="Aryan Sharma">
+              </div>
+
+              <div class="acc-form-group">
+                <label>Select Bank</label>
+                <select class="acc-select" id="simSelectBank">
+                  <option value="State Bank of India">State Bank of India</option>
+                  <option value="HDFC Bank">HDFC Bank</option>
+                  <option value="ICICI Bank">ICICI Bank</option>
+                  <option value="Punjab National Bank">Punjab National Bank</option>
+                  <option value="Axis Bank">Axis Bank</option>
+                  <option value="Bank of Baroda">Bank of Baroda</option>
+                  <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                </select>
+              </div>
+
+              <div style="display:flex; gap:8px;">
+                <div class="acc-form-group" style="flex:1;">
+                  <label>Last 4 Digits</label>
+                  <input type="text" maxlength="4" class="acc-input" id="simInputLast4" value="5432">
+                </div>
+                <div class="acc-form-group" style="flex:1;">
+                  <label>UPI PIN</label>
+                  <input type="text" maxlength="4" class="acc-input" id="simInputPin" value="1234">
+                </div>
+              </div>
+
+              <div class="acc-form-group">
+                <label>Simulated Balance (₹)</label>
+                <input type="number" step="0.01" class="acc-input" id="simInputBalance" value="54820.50">
+              </div>
+
+              <button class="btn-save-account" onclick="saveSimDrawerAccount()">Apply Account Changes</button>
+            </div>
+
+            <!-- Quick Add Custom Transaction -->
+            <div class="sim-section-box">
+              <div class="sim-section-title">💳 Quick Transaction</div>
+
+              <div class="acc-form-group">
+                <label>Recipient / Sender</label>
+                <input type="text" class="acc-input" id="simTxName" placeholder="e.g. Zomato, Aman, Metro" value="Amazon India">
+              </div>
+
+              <div style="display:flex; gap:8px;">
+                <div class="acc-form-group" style="flex:1;">
+                  <label>Amount (₹)</label>
+                  <input type="number" class="acc-input" id="simTxAmount" value="799">
+                </div>
+                <div class="acc-form-group" style="flex:1;">
+                  <label>Type</label>
+                  <select class="acc-select" id="simTxType">
+                    <option value="debit">Debit (-)</option>
+                    <option value="credit">Credit (+)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="acc-form-group">
+                <label>Time / Date</label>
+                <input type="text" class="acc-input" id="simTxTime" value="Just now">
+              </div>
+
+              <button class="btn-save-account" style="background:#24193b; border-color:#652b9f;" onclick="addSimDrawerTransaction()">+ Push to History</button>
+            </div>
+
+            <!-- Quick Reset Tools -->
+            <div class="sim-section-box" style="text-align:center;">
+              <button onclick="resetAllDemoData()" style="width:100%; padding:10px; background:#291414; color:#f87171; border:1px solid #7f1d1d; border-radius:10px; font-size:12px; font-weight:600; cursor:pointer;">
+                🔄 Reset to Defaults
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ================= 100% PHONEPE TOP PURPLE HEADER ================= -->
+      <header class="phonepe-main-header">
+        <div class="header-user-loc-box" onclick="openAccountSetupModal()" title="Tap to Edit Profile & Bank Details">
+          <div class="profile-circle-wrap" id="hdrAvatarInitial">
+            A
+            <div class="profile-flag-circle">🇮🇳</div>
+          </div>
+          <div class="header-user-info-text">
+            <div class="user-name-line">
+              <span class="user-name-text" id="hdrDisplayName">Aryan Sharma</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+            <div class="user-acc-badge">
+              <span class="verified-dot"></span>
+              <span id="hdrSubBadge">Primary UPI Account</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-right-actions">
+          <!-- QR Scanner (Secret Long Press or Tap for Control Panel) -->
+          <button class="hdr-action-btn" id="hdrQrScannerBtn" onclick="handleQrIconClick()" title="Scan QR Code">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="7" y="7" width="3" height="3"></rect><rect x="14" y="7" width="3" height="3"></rect><rect x="7" y="14" width="3" height="3"></rect><rect x="14" y="14" width="3" height="3"></rect></svg>
+          </button>
+          
+          <!-- Notifications Bell -->
+          <button class="hdr-action-btn" onclick="openNotificationModal()" title="Notifications">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span class="hdr-red-dot"></span>
+          </button>
+
+          <!-- Help Icon -->
+          <button class="hdr-action-btn" onclick="showToast('PhonePe 24x7 Help Center')" title="Help">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="screen-stage">
+
+        <!-- ================= SCREEN 1: 1:1 PHONEPE HOME DASHBOARD ================= -->
+        <section class="app-screen active-screen" id="screen-home">
+          <div class="dashboard-content">
+            
+            <!-- PhonePe UPI ID Pill Bar -->
+            <div class="upi-info-strip">
+              <div class="upi-id-left">
+                <span>My UPI ID:</span>
+                <span class="upi-id-bold" id="homeUpiIdText">aryansharma@ybl</span>
+              </div>
+              <button class="btn-copy-upi" onclick="copyUpiId()">Copy</button>
+            </div>
+
+            <!-- PRIMARY 4-CIRCLE TRANSFER MONEY CARD -->
+            <div class="pp-white-card">
+              <div class="card-title-row">
+                <span class="card-title-text">Transfer Money</span>
+                <span class="card-action-link" onclick="openAccountSetupModal()">⚙️ Settings</span>
+              </div>
+              <div class="transfer-circle-grid">
+                <div class="transfer-item" onclick="openSendMoneyModal()">
+                  <div class="transfer-circle-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  </div>
+                  <span class="transfer-circle-label">To Mobile Number</span>
+                </div>
+
+                <div class="transfer-item" onclick="openSendMoneyModal()">
+                  <div class="transfer-circle-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                  </div>
+                  <span class="transfer-circle-label">To Bank / UPI ID</span>
+                </div>
+
+                <div class="transfer-item" onclick="openSelfTransferModal()">
+                  <div class="transfer-circle-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                  </div>
+                  <span class="transfer-circle-label">To Self Account</span>
+                </div>
+
+                <!-- CHECK BALANCE BUTTON (PRIMARY WORKING CTA) -->
+                <div class="transfer-item highlight" onclick="openBankPickerSheet()">
+                  <div class="transfer-circle-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  </div>
+                  <span class="transfer-circle-label"><strong>Check Balance</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECONDARY QUICK LINKS STRIP (Wallet, Rewards, Refer) -->
+            <div class="quick-links-row">
+              <div class="quick-link-card" onclick="openWalletModal()">
+                <span class="ql-icon">👛</span>
+                <span class="ql-title">PhonePe Wallet</span>
+                <span class="ql-sub" id="walletQuickSub">₹250.00</span>
+              </div>
+              <div class="quick-link-card" onclick="openRewardsModal()">
+                <span class="ql-icon">🎁</span>
+                <span class="ql-title">Rewards</span>
+                <span class="ql-sub">3 Unscratched</span>
+              </div>
+              <div class="quick-link-card" onclick="showToast('Invite link copied: phonepe.com/invite/aryan')">
+                <span class="ql-icon">📢</span>
+                <span class="ql-title">Refer & Earn</span>
+                <span class="ql-sub">Get ₹100</span>
+              </div>
+            </div>
+
+            <!-- PROMOTIONAL PHONEPE BANNER -->
+            <div class="phonepe-promo-card" onclick="showToast('Rupay Cashback Offer Active!')">
+              <div class="promo-content">
+                <h3>Flat 5% Unlimited Cashback</h3>
+                <p>On all UPI spends with PhonePe Rupay Card</p>
+              </div>
+              <div class="promo-btn-tag">Apply Now</div>
+            </div>
+
+            <!-- RECHARGE & PAY BILLS 8-GRID -->
+            <div class="pp-white-card">
+              <div class="card-title-row">
+                <span class="card-title-text">Recharge & Pay Bills</span>
+                <span class="card-action-link" onclick="openRechargeModal('Mobile Recharge')">View All ›</span>
+              </div>
+              <div class="recharge-grid">
+                <div class="recharge-item" onclick="openRechargeModal('Mobile Recharge')">
+                  <div class="recharge-icon-box">📱</div>
+                  <span class="recharge-label">Mobile Recharge</span>
+                </div>
+                <div class="recharge-item" onclick="openRechargeModal('DTH Recharge')">
+                  <div class="recharge-icon-box">📡</div>
+                  <span class="recharge-label">DTH</span>
+                </div>
+                <div class="recharge-item" onclick="openRechargeModal('Electricity Bill')">
+                  <div class="recharge-icon-box">💡</div>
+                  <span class="recharge-label">Electricity</span>
+                </div>
+                <div class="recharge-item" onclick="openRechargeModal('Credit Card Bill')">
+                  <div class="recharge-icon-box">💳</div>
+                  <span class="recharge-label">Credit Card</span>
+                </div>
+                <div class="recharge-item" onclick="openRechargeModal('Rent Payment')">
+                  <div class="recharge-icon-box">🏠</div>
+                  <span class="recharge-label">Rent Payment</span>
+                </div>
+                <div class="recharge-item" onclick="openRechargeModal('Loan Repayment')">
+                  <div class="recharge-icon-box">💰</div>
+                  <span class="recharge-label">Loan Repay</span>
+                </div>
+                <div class="recharge-item" onclick="openRechargeModal('Education Fees')">
+                  <div class="recharge-icon-box">🎓</div>
+                  <span class="recharge-label">Education</span>
+                </div>
+                <div class="recharge-item" onclick="openRechargeModal('All Services')">
+                  <div class="recharge-icon-box">📑</div>
+                  <span class="recharge-label">See All</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- INSURANCE CARDS TEASER -->
+            <div class="pp-white-card">
+              <div class="card-title-row">
+                <span class="card-title-text">Insurance</span>
+                <span class="card-action-link" onclick="switchBottomTab('insurance')">Explore ›</span>
+              </div>
+              <div class="insurance-cards-row">
+                <div class="insurance-card" onclick="showToast('Bike Insurance starting ₹1.5/day')">
+                  <span class="ins-icon">🛵</span>
+                  <span class="ins-title">Bike</span>
+                </div>
+                <div class="insurance-card" onclick="showToast('Car Insurance policies')">
+                  <span class="ins-icon">🚗</span>
+                  <span class="ins-title">Car</span>
+                </div>
+                <div class="insurance-card" onclick="showToast('Health Insurance up to ₹1 Crore')">
+                  <span class="ins-icon">🏥</span>
+                  <span class="ins-title">Health</span>
+                </div>
+                <div class="insurance-card" onclick="showToast('Term Life Insurance')">
+                  <span class="ins-icon">🛡️</span>
+                  <span class="ins-title">Term Life</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- RECENT TRANSACTIONS PREVIEW CARD -->
+            <div class="pp-white-card">
+              <div class="card-title-row">
+                <span class="card-title-text">Recent Transactions</span>
+                <span class="card-action-link" onclick="switchBottomTab('history')">View All ›</span>
+              </div>
+              <div id="homeRecentList">
+                <!-- Dynamically rendered -->
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- SCREEN: 1:1 PHONEPE HISTORY TAB -->
+        <section class="app-screen hidden-screen" id="screen-history">
+          <div class="history-header">
+            <h2>History</h2>
+            <div style="display:flex; gap:14px; font-size:16px;">
+              <span style="cursor:pointer;" onclick="openAddTransactionModal()" title="Add Custom Transaction">➕</span>
+              <span style="cursor:pointer;" onclick="showToast('Helpdesk')">❓</span>
+            </div>
+          </div>
+
+          <div class="history-search-bar">
+            <div class="history-search-input-box">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="histSearchInput" placeholder="Search by name, number or UPI ID" oninput="filterHistoryList()">
+            </div>
+          </div>
+
+          <!-- Filter Chips -->
+          <div class="history-filter-chips">
+            <div class="hist-chip active" id="chip-all" onclick="setHistFilter('all')">All</div>
+            <div class="hist-chip" id="chip-debit" onclick="setHistFilter('debit')">Debited</div>
+            <div class="hist-chip" id="chip-credit" onclick="setHistFilter('credit')">Credited</div>
+          </div>
+
+          <!-- History Passbook Items -->
+          <div class="history-list" id="historyItemsContainer">
+            <!-- Dynamically populated -->
+          </div>
+        </section>
+
+        <!-- SCREEN: PHONEPE TRANSACTION RECEIPT MODAL -->
+        <section class="app-screen hidden-screen" id="screen-tx-detail">
+          <div class="tx-detail-top-nav">
+            <button class="tx-back-btn" onclick="closeTxDetails()">←</button>
+            <h3 style="font-size:15px; font-weight:700;">Transaction Details</h3>
+          </div>
+
+          <div class="tx-card">
+            <div class="tx-status-banner">
+              <div class="tx-status-icon">✓</div>
+              <div class="tx-status-text">
+                <h3>Transaction Successful</h3>
+                <p id="txModalTime">10 Nov 2026, 08:30 PM</p>
+              </div>
+            </div>
+
+            <div class="tx-main-amount">
+              <span style="font-size:18px; font-weight:600; color:#64748b;" id="txModalSign">- </span>
+              <span class="tx-amount-big" id="txModalAmount">₹349.00</span>
+            </div>
+
+            <div style="padding: 10px 0; border-top: 1px solid #f1f5f9;">
+              <h4 id="txModalPartyName" style="font-size:14px; font-weight:700; color:#1e293b;">Swiggy</h4>
+              <p id="txModalPartySub" style="font-size:11px; color:#64748b;">Paid to Swiggy UPI</p>
+            </div>
+
+            <div class="tx-info-block">
+              <div class="tx-info-row">
+                <span class="lbl">Debited / Credited:</span>
+                <span class="val" id="txModalBank">SBI •••• 5432</span>
+              </div>
+              <div class="tx-info-row">
+                <span class="lbl">UTR / UPI Ref:</span>
+                <span class="val" id="txModalUtr">412899471920</span>
+              </div>
+              <div class="tx-info-row">
+                <span class="lbl">Transaction ID:</span>
+                <span class="val" id="txModalId">T261109194200</span>
+              </div>
+            </div>
+
+            <div class="tx-actions-row">
+              <button class="btn-tx-action" onclick="showToast('Receipt Shared Successfully')">Share Receipt</button>
+              <button class="btn-tx-action" onclick="showToast('Payment window initialized')">Repeat Payment</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCREEN 2: AUTHENTIC NPCI UPI PIN SCREEN -->
+        <section class="app-screen hidden-screen" id="screen-npci-pin">
+          
+          <div class="npci-top-nav">
+            <div class="npci-bank-row">
+              <div class="npci-bank-logo" id="npciBankBadge">SBI</div>
+              <div class="npci-bank-details">
+                <h3 id="npciBankName">State Bank of India</h3>
+                <p id="npciAccLast4">Account No: XXXXXXXX5432</p>
+              </div>
+            </div>
+            <button class="npci-close-btn" onclick="cancelPinFlow()" title="Cancel">✕</button>
+          </div>
+
+          <div class="npci-warning-banner">
+            <span>🛡️</span>
+            <span>UPI PIN will keep your account secure. Do not share this PIN with anyone.</span>
+          </div>
+
+          <div class="npci-pin-area">
+            <div class="npci-prompt-label">ENTER 4-DIGIT UPI PIN</div>
+
+            <div class="npci-dots-row" id="npciDotsWrap">
+              <div class="npci-dot"></div>
+              <div class="npci-dot"></div>
+              <div class="npci-dot"></div>
+              <div class="npci-dot"></div>
+            </div>
+
+            <div class="npci-hint">Enter your UPI PIN to proceed</div>
+          </div>
+
+          <div class="npci-keypad">
+            <button class="npci-key" onclick="pressNpciKey('1')">1</button>
+            <button class="npci-key" onclick="pressNpciKey('2')">2</button>
+            <button class="npci-key" onclick="pressNpciKey('3')">3</button>
+            <button class="npci-key" onclick="pressNpciKey('4')">4</button>
+            <button class="npci-key" onclick="pressNpciKey('5')">5</button>
+            <button class="npci-key" onclick="pressNpciKey('6')">6</button>
+            <button class="npci-key" onclick="pressNpciKey('7')">7</button>
+            <button class="npci-key" onclick="pressNpciKey('8')">8</button>
+            <button class="npci-key" onclick="pressNpciKey('9')">9</button>
+            <button class="npci-key key-action" onclick="backspaceNpciKey()">⌫</button>
+            <button class="npci-key" onclick="pressNpciKey('0')">0</button>
+            <button class="npci-key key-submit" onclick="submitNpciPin()">✓</button>
+          </div>
+        </section>
+
+        <!-- SCREEN: CONNECTING LOADER -->
+        <section class="app-screen hidden-screen" id="screen-loader">
+          <div class="phonepe-spinner"></div>
+          <h3 style="font-size:16px; font-weight:700; color:var(--pp-text-main); margin-bottom:8px;">Contacting Your Bank</h3>
+          <p style="font-size:12px; color:var(--pp-text-sub); max-width:260px;">Fetching account balance securely through NPCI Unified Payments Interface...</p>
+        </section>
+
+        <!-- SCREEN: PHONEPE BALANCE CONFIRMATION -->
+        <section class="app-screen hidden-screen" id="screen-phonepe-result">
+          <div class="result-purple-header">
+            <div class="verified-badge-anim">✓</div>
+            <h2 style="font-size:18px; font-weight:700; margin-bottom:4px;">Bank Balance Fetched Successfully</h2>
+            <p style="font-size:11.5px; color:#d8b4fe;" id="resultRefNumber">UPI/412899471920</p>
+          </div>
+
+          <div class="result-card-container">
+            <div class="res-bank-meta">
+              <div class="res-bank-icon" id="resBankIcon">SBI</div>
+              <div>
+                <h3 style="font-size:14px; font-weight:700; color:var(--pp-text-main);" id="resBankTitle">State Bank of India</h3>
+                <p style="font-size:11px; color:var(--pp-text-sub);" id="resAccSubtitle">A/C No: •••• 5432</p>
+                <p style="font-size:10px; color:#c084fc; margin-top:2px;" id="resAccountHolderName">Aryan Sharma</p>
+              </div>
+            </div>
+
+            <div class="res-balance-block">
+              <div style="font-size:11px; font-weight:600; color:var(--pp-text-sub); text-transform:uppercase; margin-bottom:6px;">Available Balance</div>
+              <div class="res-big-amount-row">
+                <span class="res-currency">₹</span>
+                <span class="res-amount-number" id="resAmountFigure">54,820.50</span>
+              </div>
+              <button class="btn-toggle-eye" onclick="toggleResultBalance()">
+                <span id="eyeIcon">👁️</span>
+                <span id="eyeText">Hide Balance</span>
+              </button>
+            </div>
+
+            <button class="btn-phonepe-done" onclick="finishCheckBalanceFlow()">Done</button>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ================= 5-TAB PHONEPE BOTTOM NAVIGATION ================= -->
+      <nav class="phonepe-bottom-nav">
+        <button class="nav-tab-item active" id="tab-home" onclick="switchBottomTab('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-tab-item" id="tab-stores" onclick="showToast('Stores feature')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="10.5" cy="10.5" r="7.5"></circle><line x1="21" y1="21" x2="15.8" y2="15.8"></line></svg>
+          <span>Stores</span>
+        </button>
+        <button class="nav-tab-item" id="tab-insurance" onclick="showToast('Insurance & Protection')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>Insurance</span>
+        </button>
+        <button class="nav-tab-item" id="tab-wealth" onclick="showToast('Wealth & Mutual Funds')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          <span>Wealth</span>
+        </button>
+        <button class="nav-tab-item" id="tab-history" onclick="switchBottomTab('history')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="12 8 12 12 14 14"></polyline><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"></path></svg>
+          <span>History</span>
+        </button>
+      </nav>
+
+      <!-- ================= MODAL: BANK PICKER SHEET (CHECK BALANCE) ================= -->
+      <div class="modal-overlay" id="bankPickerSheet">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeBankPickerSheet()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">Select Bank Account</h3>
+            <button onclick="closeBankPickerSheet()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+          <p class="sheet-desc">Choose the bank account you want to check UPI balance for</p>
+
+          <div class="selectable-bank-card" onclick="proceedFromSheetToPin()">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="res-bank-icon" id="sheetBankIcon">SBI</div>
+              <div>
+                <h4 style="font-size:13.5px; font-weight:700; color:var(--pp-text-main);" id="sheetBankName">State Bank of India</h4>
+                <p style="font-size:11.5px; color:var(--pp-text-sub);" id="sheetBankAcc">A/C No: •••• 5432</p>
+              </div>
+            </div>
+            <div style="color:#c084fc; font-weight:700; font-size:12.5px;">Select ›</div>
+          </div>
+
+          <button class="btn-edit-account-inline" onclick="closeBankPickerSheet(); openAccountSetupModal();">
+            <span>✏️ Edit Account or Set Balance</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: SEND MONEY / PAY CONTACT ================= -->
+      <div class="modal-overlay" id="sendMoneyModal">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeSendMoneyModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">To Mobile Number / UPI ID</h3>
+            <button onclick="closeSendMoneyModal()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Recent / Frequent Contacts</label>
+            <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px;">
+              <div onclick="selectQuickContact('Rahul Verma', '9876543210')" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:8px 12px; text-align:center; min-width:82px; cursor:pointer;">
+                <div style="width:34px; height:34px; border-radius:50%; background:#2c124d; color:#c084fc; display:grid; place-items:center; font-weight:700; margin:0 auto 4px;">R</div>
+                <div style="font-size:10.5px; font-weight:600; color:var(--pp-text-main); white-space:nowrap;">Rahul V.</div>
+              </div>
+              <div onclick="selectQuickContact('Priya Singh', '9822114433')" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:8px 12px; text-align:center; min-width:82px; cursor:pointer;">
+                <div style="width:34px; height:34px; border-radius:50%; background:#2c124d; color:#c084fc; display:grid; place-items:center; font-weight:700; margin:0 auto 4px;">P</div>
+                <div style="font-size:10.5px; font-weight:600; color:var(--pp-text-main); white-space:nowrap;">Priya S.</div>
+              </div>
+              <div onclick="selectQuickContact('Zomato Delivery', '9899001122')" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:8px 12px; text-align:center; min-width:82px; cursor:pointer;">
+                <div style="width:34px; height:34px; border-radius:50%; background:#2c124d; color:#c084fc; display:grid; place-items:center; font-weight:700; margin:0 auto 4px;">Z</div>
+                <div style="font-size:10.5px; font-weight:600; color:var(--pp-text-main); white-space:nowrap;">Zomato</div>
+              </div>
+              <div onclick="selectQuickContact('Amit Kumar', '9711223344')" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:8px 12px; text-align:center; min-width:82px; cursor:pointer;">
+                <div style="width:34px; height:34px; border-radius:50%; background:#2c124d; color:#c084fc; display:grid; place-items:center; font-weight:700; margin:0 auto 4px;">A</div>
+                <div style="font-size:10.5px; font-weight:600; color:var(--pp-text-main); white-space:nowrap;">Amit K.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Recipient Name or Number</label>
+            <input type="text" class="acc-input" id="sendPayeeName" placeholder="Enter name or mobile number" value="Rahul Verma">
+          </div>
+
+          <div class="acc-form-group">
+            <label>Amount to Send (₹)</label>
+            <input type="number" class="acc-input" id="sendPayeeAmount" placeholder="₹ Enter Amount" value="450" style="font-size:18px; font-weight:700; color:#fff;">
+          </div>
+
+          <div class="acc-form-group">
+            <label>Add a Note (Optional)</label>
+            <input type="text" class="acc-input" id="sendPayeeNote" placeholder="e.g. Dinner, Rent, Groceries" value="Dinner split">
+          </div>
+
+          <div style="background:var(--pp-card-elevated); border-radius:12px; padding:10px 12px; border:1px solid var(--pp-card-border); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:28px; height:28px; border-radius:6px; background:#2c124d; color:#c084fc; display:grid; place-items:center; font-size:10px; font-weight:700;">UPI</div>
+              <div>
+                <div style="font-size:11.5px; font-weight:600; color:var(--pp-text-main);" id="sendDebitBankLabel">State Bank of India</div>
+                <div style="font-size:10px; color:var(--pp-text-sub);">Debiting Primary Account</div>
+              </div>
+            </div>
+            <span style="color:#22c55e; font-size:11px; font-weight:600;">✓ Selected</span>
+          </div>
+
+          <button class="btn-save-account" onclick="initiatePaymentFlow('contact')">
+            Proceed to Pay
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: QR SCANNER SIMULATION ================= -->
+      <div class="modal-overlay" id="qrScannerModal">
+        <div class="bottom-sheet" style="height:90%; position:relative;">
+          <div class="sheet-handle" onclick="closeQrScannerModal()"></div>
+          
+          <!-- Secret Access Button inside QR sheet -->
+          <button class="qr-secret-gear-btn" onclick="closeQrScannerModal(); toggleSimDrawer(true);" title="Secret Simulation Panel">⚙️</button>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">Scan Any QR Code</h3>
+            <button onclick="closeQrScannerModal()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+
+          <div style="position:relative; width:100%; height:200px; background:#0b0b0e; border-radius:16px; border:2px dashed #702cb8; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; margin-bottom:14px; cursor:pointer;" onclick="toggleSimDrawer(true); closeQrScannerModal();" title="Tap camera area to open Secret Control Panel">
+            <div style="position:absolute; width:80%; height:2px; background:#22c55e; box-shadow:0 0 12px #22c55e; animation:qrScanLine 1.6s ease-in-out infinite alternate;"></div>
+            <div style="font-size:32px; margin-bottom:6px;">📷</div>
+            <div style="font-size:11.5px; color:#a1a1aa; font-weight:500;">Point camera at any UPI QR code</div>
+            <div style="font-size:9.5px; color:#582696; margin-top:4px;">(Secret: Tap here to open Simulation Panel)</div>
+          </div>
+
+          <label style="display:block; font-size:11px; font-weight:600; color:var(--pp-text-sub); text-transform:uppercase; margin-bottom:8px;">Or Select Demo Merchant QR Code</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px;">
+            <button onclick="scanSampleQr('Starbucks Coffee', 'starbucks@upi', 350)" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:10px; color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; text-align:left;">
+              ☕ Starbucks (₹350)
+            </button>
+            <button onclick="scanSampleQr('Chai Point', 'chaipoint@upi', 75)" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:10px; color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; text-align:left;">
+              🍵 Chai Point (₹75)
+            </button>
+            <button onclick="scanSampleQr('Fresh Grocery Mart', 'mart@upi', 640)" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:10px; color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; text-align:left;">
+              🛒 Grocery (₹640)
+            </button>
+            <button onclick="scanSampleQr('HP Petrol Pump', 'hpcl@upi', 1200)" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:10px; color:#fff; font-size:11.5px; font-weight:600; cursor:pointer; text-align:left;">
+              ⛽ Petrol Pump (₹1,200)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: SELF ACCOUNT TRANSFER ================= -->
+      <div class="modal-overlay" id="selfTransferModal">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeSelfTransferModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">Transfer to Self Account</h3>
+            <button onclick="closeSelfTransferModal()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+
+          <div class="acc-form-group">
+            <label>From Primary Account</label>
+            <div class="selectable-bank-card" style="margin-bottom:6px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="res-bank-icon" id="selfFromIcon">SBI</div>
+                <div>
+                  <h4 style="font-size:12.5px; font-weight:700; color:var(--pp-text-main);" id="selfFromBank">State Bank of India</h4>
+                  <p style="font-size:10.5px; color:var(--pp-text-sub);" id="selfFromAcc">A/C •••• 5432</p>
+                </div>
+              </div>
+              <span style="font-size:11px; color:#c084fc; font-weight:600;">Sender</span>
+            </div>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Transfer To Your Secondary Account</label>
+            <select class="acc-select" id="selfToBank">
+              <option value="HDFC Bank - A/C •••• 9812">HDFC Bank - A/C •••• 9812</option>
+              <option value="ICICI Bank - A/C •••• 4421">ICICI Bank - A/C •••• 4421</option>
+              <option value="Axis Bank - A/C •••• 1109">Axis Bank - A/C •••• 1109</option>
+            </select>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Amount (₹)</label>
+            <input type="number" class="acc-input" id="selfTransferAmount" value="1000" style="font-size:18px; font-weight:700; color:#fff;">
+          </div>
+
+          <button class="btn-save-account" onclick="initiatePaymentFlow('self')">
+            Transfer Now
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: RECHARGE & BILL PAY ================= -->
+      <div class="modal-overlay" id="rechargeModal">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeRechargeModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;" id="rechargeModalTitle">Mobile Recharge</h3>
+            <button onclick="closeRechargeModal()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Select Operator / Board</label>
+            <select class="acc-select" id="rechargeOperator">
+              <option value="Jio Prepaid - Unlimited 5G">Jio Prepaid - Unlimited 5G</option>
+              <option value="Airtel Prepaid - Truly Unlimited">Airtel Prepaid - Truly Unlimited</option>
+              <option value="Vi Prepaid - Hero Unlimited">Vi Prepaid - Hero Unlimited</option>
+              <option value="Tata Power - Delhi Electricity">Tata Power - Delhi Distribution</option>
+              <option value="Adani Electricity Mumbai">Adani Electricity Mumbai</option>
+            </select>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Consumer Number / Mobile</label>
+            <input type="text" class="acc-input" id="rechargeTargetNumber" value="9876543210">
+          </div>
+
+          <div class="acc-form-group">
+            <label>Popular Plans</label>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:6px;">
+              <button onclick="setRechargePlan(299, '28 Days | 2GB/Day + 5G')" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:10px; padding:8px 4px; color:#fff; font-size:11px; cursor:pointer; text-align:center;">
+                <div style="font-weight:700; color:#22c55e;">₹299</div>
+                <div style="font-size:9.5px; color:#a1a1aa;">28 Days</div>
+              </button>
+              <button onclick="setRechargePlan(719, '84 Days | 1.5GB/Day + Call')" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:10px; padding:8px 4px; color:#fff; font-size:11px; cursor:pointer; text-align:center;">
+                <div style="font-weight:700; color:#22c55e;">₹719</div>
+                <div style="font-size:9.5px; color:#a1a1aa;">84 Days</div>
+              </button>
+              <button onclick="setRechargePlan(1999, '365 Days | 2.5GB/Day + VIP')" style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:10px; padding:8px 4px; color:#fff; font-size:11px; cursor:pointer; text-align:center;">
+                <div style="font-weight:700; color:#22c55e;">₹1,999</div>
+                <div style="font-size:9.5px; color:#a1a1aa;">365 Days</div>
+              </button>
+            </div>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Recharge Amount (₹)</label>
+            <input type="number" class="acc-input" id="rechargeAmount" value="299" style="font-size:18px; font-weight:700; color:#fff;">
+          </div>
+
+          <button class="btn-save-account" onclick="initiatePaymentFlow('recharge')">
+            Pay Bill / Recharge
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: PHONEPE WALLET ================= -->
+      <div class="modal-overlay" id="walletModal">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeWalletModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">PhonePe Wallet</h3>
+            <button onclick="closeWalletModal()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+
+          <div style="background:linear-gradient(135deg, #24143a 0%, #150a24 100%); border-radius:16px; padding:18px; border:1px solid #4a1d7c; text-align:center; margin-bottom:14px;">
+            <div style="font-size:11.5px; color:#c084fc; text-transform:uppercase; font-weight:600;">Available Wallet Balance</div>
+            <div style="font-size:32px; font-weight:800; color:#fff; margin:6px 0;" id="walletBalanceBig">₹250.00</div>
+            <div style="font-size:10.5px; color:#a1a1aa;">Use for 1-click payments anywhere without UPI PIN</div>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Topup Amount (₹)</label>
+            <div style="display:flex; gap:6px; margin-bottom:8px;">
+              <button onclick="document.getElementById('walletTopupAmount').value=500" style="flex:1; padding:7px; background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); color:#fff; border-radius:8px; font-size:11.5px; cursor:pointer;">+ ₹500</button>
+              <button onclick="document.getElementById('walletTopupAmount').value=1000" style="flex:1; padding:7px; background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); color:#fff; border-radius:8px; font-size:11.5px; cursor:pointer;">+ ₹1,000</button>
+              <button onclick="document.getElementById('walletTopupAmount').value=2000" style="flex:1; padding:7px; background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); color:#fff; border-radius:8px; font-size:11.5px; cursor:pointer;">+ ₹2,000</button>
+            </div>
+            <input type="number" class="acc-input" id="walletTopupAmount" value="500">
+          </div>
+
+          <button class="btn-save-account" onclick="topupWalletAction()">
+            Topup Wallet Instantly
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: REWARDS / SCRATCH CARDS ================= -->
+      <div class="modal-overlay" id="rewardsModal">
+        <div class="bottom-sheet" style="max-height:90%;">
+          <div class="sheet-handle" onclick="closeRewardsModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">PhonePe Rewards</h3>
+            <button onclick="closeRewardsModal()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+          <p class="sheet-desc">Tap or scratch to unlock cashback and partner discounts</p>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+            <div class="scratch-card-box" id="scratch1" onclick="scratchRewardCard(1, '₹25 Cashback', 'Credited directly to PhonePe Wallet')">
+              <div class="scratch-cover" id="cover1">
+                <span>🎁 Tap to Scratch</span>
+              </div>
+              <div class="scratch-reward">
+                <div style="font-size:22px; margin-bottom:2px;">💰</div>
+                <div style="font-size:13px; font-weight:700; color:#22c55e;">₹25 Cashback</div>
+                <div style="font-size:9.5px; color:#a1a1aa; margin-top:2px;">In PhonePe Wallet</div>
+              </div>
+            </div>
+
+            <div class="scratch-card-box" id="scratch2" onclick="scratchRewardCard(2, 'Flat 50% Off', 'On Swiggy Orders above ₹199')">
+              <div class="scratch-cover" id="cover2">
+                <span>🎁 Tap to Scratch</span>
+              </div>
+              <div class="scratch-reward">
+                <div style="font-size:22px; margin-bottom:2px;">🍕</div>
+                <div style="font-size:13px; font-weight:700; color:#f97316;">Flat 50% Off</div>
+                <div style="font-size:9.5px; color:#a1a1aa; margin-top:2px;">Swiggy Coupon</div>
+              </div>
+            </div>
+
+            <div class="scratch-card-box" id="scratch3" onclick="scratchRewardCard(3, '₹100 Gold Voucher', 'Invest in 24K Digital Gold')">
+              <div class="scratch-cover" id="cover3">
+                <span>🎁 Tap to Scratch</span>
+              </div>
+              <div class="scratch-reward">
+                <div style="font-size:22px; margin-bottom:2px;">🪙</div>
+                <div style="font-size:13px; font-weight:700; color:#eab308;">₹100 Free Gold</div>
+                <div style="font-size:9.5px; color:#a1a1aa; margin-top:2px;">Digital Gold Bonus</div>
+              </div>
+            </div>
+
+            <div class="scratch-card-box" id="scratch4" onclick="scratchRewardCard(4, 'Flat ₹75 Cashback', 'On Electricity Bill Payment')">
+              <div class="scratch-cover" id="cover4">
+                <span>🎁 Tap to Scratch</span>
+              </div>
+              <div class="scratch-reward">
+                <div style="font-size:22px; margin-bottom:2px;">⚡</div>
+                <div style="font-size:13px; font-weight:700; color:#38bdf8;">₹75 Cashback</div>
+                <div style="font-size:9.5px; color:#a1a1aa; margin-top:2px;">Bill Payment</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: NOTIFICATIONS ================= -->
+      <div class="modal-overlay" id="notificationModal">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeNotificationModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">Notifications</h3>
+            <button onclick="closeNotificationModal()" style="border:none; background:none; font-size:16px; color:#a1a1aa; cursor:pointer;">✕</button>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:10px 12px;">
+              <div style="font-size:12px; font-weight:700; color:var(--pp-text-main);">⚡ Bill Due Reminder</div>
+              <div style="font-size:10.5px; color:var(--pp-text-sub); margin-top:2px;">Electricity bill for Delhi Vidyut Board is due in 3 days. Pay now to avoid penalty.</div>
+              <div style="font-size:9.5px; color:#c084fc; margin-top:4px;">10 mins ago</div>
+            </div>
+            <div style="background:var(--pp-card-elevated); border:1px solid var(--pp-card-border); border-radius:12px; padding:10px 12px;">
+              <div style="font-size:12px; font-weight:700; color:#22c55e;">🎉 ₹50 Cashback Won</div>
+              <div style="font-size:10.5px; color:var(--pp-text-sub); margin-top:2px;">Congratulations! You received ₹50 cashback on your merchant UPI transaction.</div>
+              <div style="font-size:9.5px; color:#c084fc; margin-top:4px;">2 hours ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: EDIT / SETUP ACCOUNT MODAL ================= -->
+      <div class="modal-overlay" id="accountSetupModal">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeAccountSetupModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">Setup PhonePe Account</h3>
+            <button onclick="closeAccountSetupModal()" style="border:none; background:none; font-size:16px; color:#64748b; cursor:pointer;">✕</button>
+          </div>
+          <p class="sheet-desc">Configure your name, bank name, last 4 digits, and balance to show in PhonePe.</p>
+
+          <div class="acc-form-group">
+            <label>Your Name (Account Holder)</label>
+            <input type="text" class="acc-input" id="setupUserName" value="Aryan Sharma">
+          </div>
+
+          <div class="acc-form-group">
+            <label>Account Tag / Subtitle</label>
+            <input type="text" class="acc-input" id="setupUserTag" value="Primary UPI Account">
+          </div>
+
+          <div class="acc-form-group">
+            <label>Select Bank</label>
+            <select class="acc-select" id="setupBankSelect">
+              <option value="State Bank of India">State Bank of India</option>
+              <option value="HDFC Bank">HDFC Bank</option>
+              <option value="ICICI Bank">ICICI Bank</option>
+              <option value="Punjab National Bank">Punjab National Bank</option>
+              <option value="Axis Bank">Axis Bank</option>
+              <option value="Bank of Baroda">Bank of Baroda</option>
+              <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+            </select>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div class="acc-form-group" style="flex:1;">
+              <label>Last 4 Digits</label>
+              <input type="text" maxlength="4" class="acc-input" id="setupLast4" value="5432">
+            </div>
+            <div class="acc-form-group" style="flex:1;">
+              <label>UPI PIN (4-Digit)</label>
+              <input type="password" maxlength="4" class="acc-input" id="setupPin" value="1234" style="letter-spacing:4px;">
+            </div>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Simulated Balance (₹)</label>
+            <input type="number" step="0.01" class="acc-input" id="setupBalance" value="54820.50">
+          </div>
+
+          <button class="btn-save-account" onclick="saveAccountDetails()">
+            Save & Update PhonePe
+          </button>
+
+          <button class="btn-edit-account-inline" style="margin-top:10px;" onclick="closeAccountSetupModal(); toggleSimDrawer(true);">
+            <span>⚙️ Open Simulation Control Panel Drawer</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: ADD CUSTOM TRANSACTION ================= -->
+      <div class="modal-overlay" id="addTxModal">
+        <div class="bottom-sheet">
+          <div class="sheet-handle" onclick="closeAddTxModal()"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 class="sheet-title" style="margin:0;">Add Custom Transaction</h3>
+            <button onclick="closeAddTxModal()" style="border:none; background:none; font-size:16px; color:#64748b; cursor:pointer;">✕</button>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Merchant / Person Name</label>
+            <input type="text" class="acc-input" id="newTxName" placeholder="e.g. Zomato, Uber, Rohit Kumar" value="Rohit Kumar">
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div class="acc-form-group" style="flex:1;">
+              <label>Amount (₹)</label>
+              <input type="number" class="acc-input" id="newTxAmount" value="500">
+            </div>
+            <div class="acc-form-group" style="flex:1;">
+              <label>Type</label>
+              <select class="acc-select" id="newTxType">
+                <option value="debit">Debited (Red -)</option>
+                <option value="credit">Credited (Green +)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="acc-form-group">
+            <label>Custom Date & Time Display</label>
+            <input type="text" class="acc-input" id="newTxTime" value="Just now">
+          </div>
+
+          <button class="btn-save-account" onclick="saveNewTransaction()">
+            Add Transaction to History
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <style>
+    @keyframes qrScanLine {
+      from { top: 10%; }
+      to { top: 90%; }
+    }
+
+    /* Scratch Card Box Styling */
+    .scratch-card-box {
+      position: relative;
+      background: var(--pp-card-elevated);
+      border: 1px solid var(--pp-card-border);
+      border-radius: 14px;
+      height: 120px;
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scratch-cover {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #442468 0%, #201035 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #e9d5ff;
+      font-size: 11px;
+      font-weight: 700;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 2;
+      border: 1px dashed #6b21a8;
+    }
+    .scratch-cover.scratched {
+      opacity: 0;
+      transform: scale(0.8);
+      pointer-events: none;
+    }
+    .scratch-reward {
+      text-align: center;
+      padding: 10px;
+      z-index: 1;
+    }
+  </style>
+
+  <script>
+    /**
+     * 1:1 PhonePe Mobile App Engine
+     */
+
+    let userAccount = {
+      userName: 'Aryan Sharma',
+      userTag: 'Primary UPI Account',
+      bankName: 'State Bank of India',
+      last4: '5432',
+      balance: 54820.50,
+      pin: '1234'
+    };
+
+    // Load persisted account
+    try {
+      const savedAcc = localStorage.getItem('phonepe_user_account');
+      if (savedAcc) {
+        userAccount = { ...userAccount, ...JSON.parse(savedAcc) };
+      }
+    } catch(e) {}
+
+    const defaultTransactions = [
+      {
+        id: 'T261110183021',
+        title: 'Swiggy',
+        subtitle: 'Paid to Swiggy UPI',
+        amount: 349.00,
+        type: 'debit',
+        time: 'Today, 08:30 PM',
+        utr: '412899471920',
+        avatarText: 'S'
+      },
+      {
+        id: 'T261109141512',
+        title: 'Ramesh Kumar',
+        subtitle: 'Received from Ramesh Kumar',
+        amount: 2500.00,
+        type: 'credit',
+        time: 'Yesterday, 02:15 PM',
+        utr: '412800342918',
+        avatarText: 'R'
+      },
+      {
+        id: 'T261108112045',
+        title: 'Google Play Recharge',
+        subtitle: 'Paid to Google India',
+        amount: 190.00,
+        type: 'debit',
+        time: '08 Nov, 11:20 AM',
+        utr: '412799332111',
+        avatarText: 'G'
+      },
+      {
+        id: 'T261024091011',
+        title: 'Salary Credit',
+        subtitle: 'Credited from Tech Solutions Ltd',
+        amount: 45000.00,
+        type: 'credit',
+        time: '24 Oct, 09:10 AM',
+        utr: '410299884210',
+        avatarText: 'T'
+      }
+    ];
+
+    let transactions = [];
+    try {
+      const saved = localStorage.getItem('phonepe_demo_txs');
+      transactions = saved ? JSON.parse(saved) : [...defaultTransactions];
+    } catch(e) {
+      transactions = [...defaultTransactions];
+    }
+
+    let enteredPin = '';
+    let isBalanceHidden = false;
+    let currentFilter = 'all';
+    let pendingPayment = null;
+    let walletBalance = 250.00;
+
+    // Secret QR Scanner Tap Counter & Long Press
+    let qrTapCount = 0;
+    let qrTapTimer = null;
+    let qrLongPressTimer = null;
+
+    function handleQrIconClick() {
+      qrTapCount++;
+      if (qrTapTimer) clearTimeout(qrTapTimer);
+
+      if (qrTapCount >= 2) {
+        // Double-tap secretly opens the Control Panel directly!
+        qrTapCount = 0;
+        toggleSimDrawer(true);
+        showToast('Secret Simulation Panel opened');
+        return;
+      }
+
+      qrTapTimer = setTimeout(() => {
+        // Single tap opens the QR Scanner modal (which also contains the hidden secret access)
+        qrTapCount = 0;
+        openQrScannerModal();
+      }, 260);
+    }
+
+    // Support touch long-press on QR scanner icon
+    const qrBtn = document.getElementById('hdrQrScannerBtn');
+    if (qrBtn) {
+      qrBtn.addEventListener('mousedown', () => {
+        qrLongPressTimer = setTimeout(() => {
+          toggleSimDrawer(true);
+          showToast('Secret Simulation Panel opened');
+        }, 500);
+      });
+      qrBtn.addEventListener('mouseup', () => {
+        if (qrLongPressTimer) clearTimeout(qrLongPressTimer);
+      });
+      qrBtn.addEventListener('touchstart', () => {
+        qrLongPressTimer = setTimeout(() => {
+          toggleSimDrawer(true);
+          showToast('Secret Simulation Panel opened');
+        }, 500);
+      }, { passive: true });
+      qrBtn.addEventListener('touchend', () => {
+        if (qrLongPressTimer) clearTimeout(qrLongPressTimer);
+      });
+    }
+
+    // Load wallet from localStorage
+    try {
+      const savedWallet = localStorage.getItem('phonepe_wallet_balance');
+      if (savedWallet) walletBalance = parseFloat(savedWallet);
+    } catch(e) {}
+
+    function updateWalletUI() {
+      const formatted = `₹${formatINR(walletBalance)}`;
+      const sub = document.getElementById('walletQuickSub');
+      const big = document.getElementById('walletBalanceBig');
+      if (sub) sub.textContent = formatted;
+      if (big) big.textContent = formatted;
+    }
+
+    function formatINR(val) {
+      const num = Number(val) || 0;
+      return num.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('phoneToast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('toast-visible');
+      setTimeout(() => {
+        toast.classList.remove('toast-visible');
+      }, 2300);
+    }
+
+    function copyUpiId() {
+      const cleanHandle = userAccount.userName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+      const upiText = `${cleanHandle}@ybl`;
+      try {
+        const temp = document.createElement('input');
+        temp.value = upiText;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+      } catch(e) {}
+      showToast('UPI ID copied: ' + upiText);
+    }
+
+    function getBankBadge(bankName) {
+      if (!bankName) return 'BK';
+      const words = bankName.split(' ');
+      if (words.length >= 2) {
+        return (words[0][0] + words[1][0]).toUpperCase();
+      }
+      return bankName.substring(0, 3).toUpperCase();
+    }
+
+    function renderAppAccount() {
+      const badge = getBankBadge(userAccount.bankName);
+      const userInitial = userAccount.userName.charAt(0).toUpperCase() || 'A';
+      const cleanHandle = userAccount.userName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+
+      // Header: Display name and account tag
+      const avatarNode = document.getElementById('hdrAvatarInitial');
+      if (avatarNode && avatarNode.childNodes[0]) {
+        avatarNode.childNodes[0].nodeValue = userInitial + ' ';
+      }
+      const hdrName = document.getElementById('hdrDisplayName');
+      if (hdrName) hdrName.textContent = userAccount.userName || 'Aryan Sharma';
+      const hdrSub = document.getElementById('hdrSubBadge');
+      if (hdrSub) hdrSub.textContent = userAccount.userTag || `${userAccount.bankName} •••• ${userAccount.last4}`;
+
+      // UPI ID
+      const upiIdEl = document.getElementById('homeUpiIdText');
+      if (upiIdEl) upiIdEl.textContent = `${cleanHandle}@ybl`;
+
+      // Bank Picker Bottom Sheet
+      const sheetName = document.getElementById('sheetBankName');
+      if (sheetName) sheetName.textContent = userAccount.bankName;
+      const sheetAcc = document.getElementById('sheetBankAcc');
+      if (sheetAcc) sheetAcc.textContent = `A/C No: •••• ${userAccount.last4}`;
+      const sheetIcon = document.getElementById('sheetBankIcon');
+      if (sheetIcon) sheetIcon.textContent = badge;
+
+      // NPCI UPI PIN Screen
+      const npciName = document.getElementById('npciBankName');
+      if (npciName) npciName.textContent = userAccount.bankName;
+      const npciAcc = document.getElementById('npciAccLast4');
+      if (npciAcc) npciAcc.textContent = `Account No: XXXXXXXX${userAccount.last4}`;
+      const npciBadge = document.getElementById('npciBankBadge');
+      if (npciBadge) npciBadge.textContent = badge;
+
+      // Result Screen
+      const resTitle = document.getElementById('resBankTitle');
+      if (resTitle) resTitle.textContent = userAccount.bankName;
+      const resSub = document.getElementById('resAccSubtitle');
+      if (resSub) resSub.textContent = `A/C No: •••• ${userAccount.last4}`;
+      const resIcon = document.getElementById('resBankIcon');
+      if (resIcon) resIcon.textContent = badge;
+      const resHolder = document.getElementById('resAccountHolderName');
+      if (resHolder) resHolder.textContent = userAccount.userName;
+      const resFigure = document.getElementById('resAmountFigure');
+      if (resFigure) resFigure.textContent = formatINR(userAccount.balance);
+
+      // Account Setup Inputs
+      const setupName = document.getElementById('setupUserName');
+      if (setupName) setupName.value = userAccount.userName;
+      const setupTag = document.getElementById('setupUserTag');
+      if (setupTag) setupTag.value = userAccount.userTag || 'Primary UPI Account';
+      const setupBank = document.getElementById('setupBankSelect');
+      if (setupBank) setupBank.value = userAccount.bankName;
+      const setupL4 = document.getElementById('setupLast4');
+      if (setupL4) setupL4.value = userAccount.last4;
+      const setupBal = document.getElementById('setupBalance');
+      if (setupBal) setupBal.value = userAccount.balance;
+      const setupP = document.getElementById('setupPin');
+      if (setupP) setupP.value = userAccount.pin;
+
+      // Also sync drawer input fields
+      if (document.getElementById('simInputName')) {
+        document.getElementById('simInputName').value = userAccount.userName;
+        document.getElementById('simSelectBank').value = userAccount.bankName;
+        document.getElementById('simInputLast4').value = userAccount.last4;
+        document.getElementById('simInputPin').value = userAccount.pin;
+        document.getElementById('simInputBalance').value = userAccount.balance;
+      }
+    }
+
+    // SIMULATION DRAWER CONTROLS
+    function toggleSimDrawer(show) {
+      const backdrop = document.getElementById('simDrawerBackdrop');
+      if (!backdrop) return;
+      if (show) {
+        renderAppAccount();
+        backdrop.classList.add('active');
+      } else {
+        backdrop.classList.remove('active');
+      }
+    }
+
+    function handleSimBackdropClick(event) {
+      if (event.target === document.getElementById('simDrawerBackdrop')) {
+        toggleSimDrawer(false);
+      }
+    }
+
+    function saveSimDrawerAccount() {
+      userAccount.userName = document.getElementById('simInputName').value.trim() || 'Aryan Sharma';
+      userAccount.bankName = document.getElementById('simSelectBank').value;
+      userAccount.last4 = document.getElementById('simInputLast4').value.trim() || '5432';
+      userAccount.pin = document.getElementById('simInputPin').value.trim() || '1234';
+      userAccount.balance = parseFloat(document.getElementById('simInputBalance').value) || 0;
+
+      try {
+        localStorage.setItem('phonepe_user_account', JSON.stringify(userAccount));
+      } catch(e) {}
+
+      renderAppAccount();
+      toggleSimDrawer(false);
+      showToast('Simulation settings updated!');
+    }
+
+    function addSimDrawerTransaction() {
+      const name = document.getElementById('simTxName').value.trim() || 'Amazon India';
+      const amount = parseFloat(document.getElementById('simTxAmount').value) || 0;
+      const type = document.getElementById('simTxType').value;
+      const time = document.getElementById('simTxTime').value.trim() || 'Just now';
+
+      const newTx = {
+        id: 'T' + Date.now().toString().slice(-10),
+        title: name,
+        subtitle: type === 'debit' ? `Paid to ${name}` : `Received from ${name}`,
+        amount: amount,
+        type: type,
+        time: time,
+        utr: '41' + Math.floor(1000000000 + Math.random() * 9000000000),
+        avatarText: name.charAt(0).toUpperCase()
+      };
+
+      transactions.unshift(newTx);
+      try {
+        localStorage.setItem('phonepe_demo_txs', JSON.stringify(transactions));
+      } catch(e) {}
+
+      renderHistory();
+      renderHomeRecent();
+      toggleSimDrawer(false);
+      showToast('Transaction created in History!');
+    }
+
+    function resetAllDemoData() {
+      localStorage.removeItem('phonepe_user_account');
+      localStorage.removeItem('phonepe_demo_txs');
+      localStorage.removeItem('phonepe_wallet_balance');
+      userAccount = {
+        userName: 'Aryan Sharma',
+        userTag: 'Primary UPI Account',
+        bankName: 'State Bank of India',
+        last4: '5432',
+        balance: 54820.50,
+        pin: '1234'
+      };
+      transactions = [...defaultTransactions];
+      walletBalance = 250.00;
+      renderAppAccount();
+      renderHistory();
+      renderHomeRecent();
+      updateWalletUI();
+      toggleSimDrawer(false);
+      showToast('Reset all simulator data to default');
+    }
+
+    // Modal Control: Setup Account
+    function openAccountSetupModal() {
+      document.getElementById('accountSetupModal').classList.add('open');
+    }
+    function closeAccountSetupModal() {
+      document.getElementById('accountSetupModal').classList.remove('open');
+    }
+
+    function saveAccountDetails() {
+      userAccount.userName = document.getElementById('setupUserName').value.trim() || 'Aryan Sharma';
+      userAccount.userTag = document.getElementById('setupUserTag').value.trim() || 'Primary UPI Account';
+      userAccount.bankName = document.getElementById('setupBankSelect').value;
+      userAccount.last4 = document.getElementById('setupLast4').value.trim() || '5432';
+      userAccount.balance = parseFloat(document.getElementById('setupBalance').value) || 0;
+      userAccount.pin = document.getElementById('setupPin').value.trim() || '1234';
+
+      try {
+        localStorage.setItem('phonepe_user_account', JSON.stringify(userAccount));
+      } catch(e) {}
+
+      renderAppAccount();
+      closeAccountSetupModal();
+      showToast('PhonePe account updated!');
+    }
+
+    // Modal Control: Bank Picker Sheet (Check Balance Trigger)
+    function openBankPickerSheet() {
+      document.getElementById('bankPickerSheet').classList.add('open');
+    }
+    function closeBankPickerSheet() {
+      document.getElementById('bankPickerSheet').classList.remove('open');
+    }
+
+    function proceedFromSheetToPin() {
+      closeBankPickerSheet();
+      pendingPayment = null;
+      startPinFlow();
+    }
+
+    function startPinFlow() {
+      enteredPin = '';
+      updateNpciDots();
+      navigateToScreen('screen-npci-pin');
+    }
+
+    function pressNpciKey(digit) {
+      if (enteredPin.length < 4) {
+        enteredPin += digit;
+        updateNpciDots();
+        if (enteredPin.length === 4) {
+          setTimeout(submitNpciPin, 200);
+        }
+      }
+    }
+
+    function backspaceNpciKey() {
+      if (enteredPin.length > 0) {
+        enteredPin = enteredPin.slice(0, -1);
+        updateNpciDots();
+      }
+    }
+
+    function updateNpciDots() {
+      const dots = document.querySelectorAll('#npciDotsWrap .npci-dot');
+      dots.forEach((dot, index) => {
+        if (index < enteredPin.length) {
+          dot.classList.add('filled');
+        } else {
+          dot.classList.remove('filled');
+        }
+      });
+    }
+
+    function cancelPinFlow() {
+      enteredPin = '';
+      pendingPayment = null;
+      navigateToScreen('screen-home');
+    }
+
+    function submitNpciPin() {
+      if (enteredPin.length !== 4) {
+        showToast('Please enter 4-digit PIN');
+        return;
+      }
+
+      if (enteredPin === userAccount.pin) {
+        navigateToScreen('screen-loader');
+        setTimeout(() => {
+          if (pendingPayment) {
+            userAccount.balance = Math.max(0, userAccount.balance - pendingPayment.amount);
+            try {
+              localStorage.setItem('phonepe_user_account', JSON.stringify(userAccount));
+            } catch(e) {}
+
+            const txRecord = {
+              id: 'T' + Date.now().toString().slice(-10),
+              title: pendingPayment.title,
+              subtitle: pendingPayment.subtitle,
+              amount: pendingPayment.amount,
+              type: 'debit',
+              time: 'Just now',
+              utr: '41' + Math.floor(1000000000 + Math.random() * 9000000000),
+              avatarText: pendingPayment.avatarText
+            };
+            transactions.unshift(txRecord);
+            try {
+              localStorage.setItem('phonepe_demo_txs', JSON.stringify(transactions));
+            } catch(e) {}
+
+            renderAppAccount();
+            renderHistory();
+            renderHomeRecent();
+
+            pendingPayment = null;
+            openTxDetails(txRecord.id);
+            showToast('Payment Successful! Balance updated.');
+          } else {
+            const randomRef = 'UPI/' + Math.floor(100000000000 + Math.random() * 900000000000);
+            const refEl = document.getElementById('resultRefNumber');
+            if (refEl) refEl.textContent = randomRef;
+            
+            isBalanceHidden = false;
+            renderResultBalance();
+            navigateToScreen('screen-phonepe-result');
+          }
+        }, 900);
+      } else {
+        const dotsBox = document.getElementById('npciDotsWrap');
+        if (dotsBox) dotsBox.classList.add('shake-effect');
+        showToast('Incorrect UPI PIN! Try again');
+        setTimeout(() => {
+          if (dotsBox) dotsBox.classList.remove('shake-effect');
+          enteredPin = '';
+          updateNpciDots();
+        }, 450);
+      }
+    }
+
+    function toggleResultBalance() {
+      isBalanceHidden = !isBalanceHidden;
+      renderResultBalance();
+    }
+
+    function renderResultBalance() {
+      const el = document.getElementById('resAmountFigure');
+      const eyeIcon = document.getElementById('eyeIcon');
+      const eyeText = document.getElementById('eyeText');
+
+      if (!el || !eyeIcon || !eyeText) return;
+
+      if (isBalanceHidden) {
+        el.textContent = '••••••';
+        el.className = 'res-amount-number res-amount-hidden';
+        eyeIcon.textContent = '👁️';
+        eyeText.textContent = 'Show Balance';
+      } else {
+        el.textContent = formatINR(userAccount.balance);
+        el.className = 'res-amount-number';
+        eyeIcon.textContent = '👁️';
+        eyeText.textContent = 'Hide Balance';
+      }
+    }
+
+    function finishCheckBalanceFlow() {
+      navigateToScreen('screen-home');
+    }
+
+    // SCREEN ROUTING
+    function navigateToScreen(targetScreenId) {
+      const allScreens = document.querySelectorAll('.app-screen');
+      allScreens.forEach(s => {
+        if (s.id === targetScreenId) {
+          s.classList.remove('hidden-screen');
+          s.classList.add('active-screen');
+        } else {
+          s.classList.remove('active-screen');
+          s.classList.add('hidden-screen');
+        }
+      });
+    }
+
+    function switchBottomTab(tabName) {
+      const tabs = ['home', 'stores', 'insurance', 'wealth', 'history'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (btn) btn.classList.remove('active');
+      });
+
+      const activeBtn = document.getElementById('tab-' + tabName);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      if (tabName === 'home') {
+        navigateToScreen('screen-home');
+      } else if (tabName === 'history') {
+        renderHistory();
+        navigateToScreen('screen-history');
+      }
+    }
+
+    // HISTORY PASSBOOK RENDERING
+    function renderHistory() {
+      const container = document.getElementById('historyItemsContainer');
+      if (!container) return;
+
+      const q = (document.getElementById('histSearchInput')?.value || '').toLowerCase().trim();
+
+      const filtered = transactions.filter(tx => {
+        if (currentFilter !== 'all' && tx.type !== currentFilter) return false;
+        if (q && !tx.title.toLowerCase().includes(q) && !tx.subtitle.toLowerCase().includes(q)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:50px 20px; color:#71717a;">
+            <div style="font-size:36px; margin-bottom:8px;">🔍</div>
+            <p style="font-size:13px; font-weight:600;">No transactions found</p>
+            <p style="font-size:11px; margin-top:4px;">Try searching with a different term</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(tx => {
+        const isDebit = tx.type === 'debit';
+        const sign = isDebit ? '-' : '+';
+        const amtClass = isDebit ? 'amount-debit' : 'amount-credit';
+        const badgeClass = isDebit ? 'badge-debit' : 'badge-credit';
+        const badgeArrow = isDebit ? '↗' : '↙';
+
+        return `
+          <div class="hist-item" onclick="openTxDetails('${tx.id}')">
+            <div class="hist-left">
+              <div class="hist-avatar">
+                ${tx.avatarText || tx.title.charAt(0).toUpperCase()}
+                <div class="hist-type-badge ${badgeClass}">${badgeArrow}</div>
+              </div>
+              <div class="hist-details">
+                <span class="hist-name">${tx.title}</span>
+                <span class="hist-subtitle">${tx.subtitle}</span>
+                <span class="hist-timestamp">${tx.time}</span>
+              </div>
+            </div>
+            <div class="hist-right">
+              <span class="hist-amount ${amtClass}">${sign} ₹${formatINR(tx.amount)}</span>
+              <div class="hist-bank-tag">${isDebit ? 'Debited from' : 'Credited to'} ${getBankBadge(userAccount.bankName)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderHomeRecent() {
+      const container = document.getElementById('homeRecentList');
+      if (!container) return;
+      const recent = transactions.slice(0, 3);
+
+      container.innerHTML = recent.map(tx => {
+        const isDebit = tx.type === 'debit';
+        const sign = isDebit ? '-' : '+';
+        const color = isDebit ? 'var(--pp-text-main)' : 'var(--pp-green)';
+
+        return `
+          <div class="home-tx-item" onclick="openTxDetails('${tx.id}')">
+            <div class="home-tx-left">
+              <div class="home-tx-avatar">${tx.avatarText || tx.title.charAt(0).toUpperCase()}</div>
+              <div>
+                <div class="home-tx-name">${tx.title}</div>
+                <div class="home-tx-time">${tx.time}</div>
+              </div>
+            </div>
+            <div class="home-tx-amount" style="color:${color};">
+              ${sign} ₹${formatINR(tx.amount)}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setHistFilter(type) {
+      currentFilter = type;
+      ['all', 'debit', 'credit'].forEach(f => {
+        const chip = document.getElementById('chip-' + f);
+        if (chip) chip.classList.toggle('active', f === type);
+      });
+      renderHistory();
+    }
+
+    function filterHistoryList() {
+      renderHistory();
+    }
+
+    // TRANSACTION RECEIPT MODAL
+    function openTxDetails(id) {
+      const tx = transactions.find(t => t.id === id) || transactions[0];
+      if (!tx) return;
+
+      const isDebit = tx.type === 'debit';
+      const signEl = document.getElementById('txModalSign');
+      if (signEl) {
+        signEl.textContent = isDebit ? '- ' : '+ ';
+        signEl.style.color = isDebit ? 'var(--pp-text-sub)' : 'var(--pp-green)';
+      }
+      const amtEl = document.getElementById('txModalAmount');
+      if (amtEl) amtEl.textContent = '₹' + formatINR(tx.amount);
+      const nameEl = document.getElementById('txModalPartyName');
+      if (nameEl) nameEl.textContent = tx.title;
+      const subEl = document.getElementById('txModalPartySub');
+      if (subEl) subEl.textContent = tx.subtitle;
+      const timeEl = document.getElementById('txModalTime');
+      if (timeEl) timeEl.textContent = tx.time;
+      const bankEl = document.getElementById('txModalBank');
+      if (bankEl) bankEl.textContent = `${userAccount.bankName} •••• ${userAccount.last4}`;
+      const utrEl = document.getElementById('txModalUtr');
+      if (utrEl) utrEl.textContent = tx.utr;
+      const idEl = document.getElementById('txModalId');
+      if (idEl) idEl.textContent = tx.id;
+
+      navigateToScreen('screen-tx-detail');
+    }
+
+    function closeTxDetails() {
+      navigateToScreen('screen-history');
+    }
+
+    // Modal Control: Add Transaction
+    function openAddTransactionModal() {
+      document.getElementById('addTxModal').classList.add('open');
+    }
+    function closeAddTxModal() {
+      document.getElementById('addTxModal').classList.remove('open');
+    }
+
+    function saveNewTransaction() {
+      const title = document.getElementById('newTxName').value.trim() || 'Payment';
+      const amount = parseFloat(document.getElementById('newTxAmount').value) || 0;
+      const type = document.getElementById('newTxType').value;
+      const time = document.getElementById('newTxTime').value.trim() || 'Just now';
+
+      const newTx = {
+        id: 'T' + Date.now().toString().slice(-10),
+        title: title,
+        subtitle: type === 'debit' ? `Paid to ${title}` : `Received from ${title}`,
+        amount: amount,
+        type: type,
+        time: time,
+        utr: '41' + Math.floor(1000000000 + Math.random() * 9000000000),
+        avatarText: title.charAt(0).toUpperCase()
+      };
+
+      transactions.unshift(newTx);
+      try {
+        localStorage.setItem('phonepe_demo_txs', JSON.stringify(transactions));
+      } catch(e) {}
+
+      renderHistory();
+      renderHomeRecent();
+      closeAddTxModal();
+      showToast('Transaction added to history');
+    }
+
+    // Interactive Flow 1: Pay to Contact
+    function openSendMoneyModal() {
+      const debitBankLabel = document.getElementById('sendDebitBankLabel');
+      if (debitBankLabel) debitBankLabel.textContent = userAccount.bankName;
+      document.getElementById('sendMoneyModal').classList.add('open');
+    }
+    function closeSendMoneyModal() {
+      document.getElementById('sendMoneyModal').classList.remove('open');
+    }
+    function selectQuickContact(name, phone) {
+      const payeeInput = document.getElementById('sendPayeeName');
+      if (payeeInput) payeeInput.value = name;
+      showToast(`Selected contact: ${name}`);
+    }
+
+    // Interactive Flow 2: QR Scanner
+    function openQrScannerModal() {
+      document.getElementById('qrScannerModal').classList.add('open');
+    }
+    function closeQrScannerModal() {
+      document.getElementById('qrScannerModal').classList.remove('open');
+    }
+    function scanSampleQr(merchantName, upiId, amount) {
+      closeQrScannerModal();
+      pendingPayment = {
+        title: merchantName,
+        subtitle: `Merchant UPI: ${upiId}`,
+        amount: amount,
+        type: 'debit',
+        time: 'Just now',
+        avatarText: merchantName.charAt(0).toUpperCase()
+      };
+      startPinFlow();
+    }
+
+    // Interactive Flow 3: Self Transfer
+    function openSelfTransferModal() {
+      const fromBank = document.getElementById('selfFromBank');
+      if (fromBank) fromBank.textContent = userAccount.bankName;
+      const fromAcc = document.getElementById('selfFromAcc');
+      if (fromAcc) fromAcc.textContent = `A/C •••• ${userAccount.last4}`;
+      const fromIcon = document.getElementById('selfFromIcon');
+      if (fromIcon) fromIcon.textContent = getBankBadge(userAccount.bankName);
+      document.getElementById('selfTransferModal').classList.add('open');
+    }
+    function closeSelfTransferModal() {
+      document.getElementById('selfTransferModal').classList.remove('open');
+    }
+
+    // Interactive Flow 4: Recharge & Bill Pay
+    function openRechargeModal(title) {
+      const recTitle = document.getElementById('rechargeModalTitle');
+      if (recTitle) recTitle.textContent = title || 'Recharge & Pay Bills';
+      document.getElementById('rechargeModal').classList.add('open');
+    }
+    function closeRechargeModal() {
+      document.getElementById('rechargeModal').classList.remove('open');
+    }
+    function setRechargePlan(amount, details) {
+      const amtInput = document.getElementById('rechargeAmount');
+      if (amtInput) amtInput.value = amount;
+      showToast(`Plan selected: ${details}`);
+    }
+
+    // Interactive Flow 5: Wallet & Rewards
+    function openWalletModal() {
+      updateWalletUI();
+      document.getElementById('walletModal').classList.add('open');
+    }
+    function closeWalletModal() {
+      document.getElementById('walletModal').classList.remove('open');
+    }
+    function topupWalletAction() {
+      const topupAmt = parseFloat(document.getElementById('walletTopupAmount').value) || 0;
+      if (topupAmt <= 0) {
+        showToast('Please enter a valid amount');
+        return;
+      }
+      walletBalance += topupAmt;
+      try {
+        localStorage.setItem('phonepe_wallet_balance', walletBalance.toString());
+      } catch(e) {}
+      updateWalletUI();
+      showToast(`Wallet topped up successfully with ₹${formatINR(topupAmt)}!`);
+      closeWalletModal();
+    }
+
+    function openRewardsModal() {
+      document.getElementById('rewardsModal').classList.add('open');
+    }
+    function closeRewardsModal() {
+      document.getElementById('rewardsModal').classList.remove('open');
+    }
+    function scratchRewardCard(id, title, desc) {
+      const cover = document.getElementById(`cover${id}`);
+      if (cover && !cover.classList.contains('scratched')) {
+        cover.classList.add('scratched');
+        showToast(`Unlocked: ${title}!`);
+        if (id === 1) {
+          walletBalance += 25;
+          try { localStorage.setItem('phonepe_wallet_balance', walletBalance.toString()); } catch(e) {}
+          updateWalletUI();
+        }
+      }
+    }
+
+    function openNotificationModal() {
+      document.getElementById('notificationModal').classList.add('open');
+    }
+    function closeNotificationModal() {
+      document.getElementById('notificationModal').classList.remove('open');
+    }
+
+    // Unified Payment Flow
+    function initiatePaymentFlow(source) {
+      if (source === 'contact') {
+        const name = document.getElementById('sendPayeeName').value.trim() || 'Beneficiary';
+        const amount = parseFloat(document.getElementById('sendPayeeAmount').value) || 0;
+        const note = document.getElementById('sendPayeeNote').value.trim() || 'Paid via PhonePe UPI';
+        if (amount <= 0) {
+          showToast('Please enter a valid amount');
+          return;
+        }
+        closeSendMoneyModal();
+        pendingPayment = {
+          title: name,
+          subtitle: note,
+          amount: amount,
+          type: 'debit',
+          time: 'Just now',
+          avatarText: name.charAt(0).toUpperCase()
+        };
+      } else if (source === 'self') {
+        const target = document.getElementById('selfToBank').value;
+        const amount = parseFloat(document.getElementById('selfTransferAmount').value) || 0;
+        if (amount <= 0) {
+          showToast('Please enter a valid amount');
+          return;
+        }
+        closeSelfTransferModal();
+        pendingPayment = {
+          title: target.split(' - ')[0],
+          subtitle: `Self Transfer to ${target}`,
+          amount: amount,
+          type: 'debit',
+          time: 'Just now',
+          avatarText: 'S'
+        };
+      } else if (source === 'recharge') {
+        const operator = document.getElementById('rechargeOperator').value;
+        const amount = parseFloat(document.getElementById('rechargeAmount').value) || 0;
+        const number = document.getElementById('rechargeTargetNumber').value;
+        if (amount <= 0) {
+          showToast('Please enter a valid amount');
+          return;
+        }
+        closeRechargeModal();
+        pendingPayment = {
+          title: operator.split(' - ')[0],
+          subtitle: `Recharge for ${number}`,
+          amount: amount,
+          type: 'debit',
+          time: 'Just now',
+          avatarText: operator.charAt(0).toUpperCase()
+        };
+      }
+      startPinFlow();
+    }
+
+    // KEYBOARD SHORTCUTS
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        toggleSimDrawer(true);
+      }
+      if (document.getElementById('screen-npci-pin')?.classList.contains('active-screen')) {
+        if (e.key >= '0' && e.key <= '9') {
+          pressNpciKey(e.key);
+        } else if (e.key === 'Backspace') {
+          backspaceNpciKey();
+        } else if (e.key === 'Enter') {
+          submitNpciPin();
+        } else if (e.key === 'Escape') {
+          cancelPinFlow();
+        }
+      }
+    });
+
+    window.onload = function() {
+      renderAppAccount();
+      renderHistory();
+      renderHomeRecent();
+      updateWalletUI();
+    };
+  </script>
+</body>
+</html>
